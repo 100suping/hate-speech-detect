@@ -63,12 +63,12 @@ def make_trainer(train_config, model, tokenizer):
         logging_strategy="epoch",
         do_train=True,  # Perform training
         do_eval=True,  # Perform evaluation
-        evaluation_strategy="epoch",  # evalute after each epoch
+        eval_strategy="epoch",  # evalute after each epoch
         save_strategy="epoch",
         save_total_limit=3,
         load_best_model_at_end=True,
         run_name=train_config.run_name,  # [matthewburke/korean_sentiment, beomi/korean-hatespeech-multilabel]
-        # report_to='wandb',
+        report_to="wandb",
         # disable_tqdm=True,
         seed=42,  # Seed for experiment reproducibility 3x3
     )
@@ -165,7 +165,6 @@ def inference(config):
         config, tokenizer=tokenizer, type_="test", submission=True
     )
     test_loader = DataLoader(dataset=test_dataset, batch_size=32, shuffle=False)
-    print(type(test_dataset), type(test_loader))
 
     answer = []
     print("Inference Start!")

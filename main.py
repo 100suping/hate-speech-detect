@@ -1,7 +1,7 @@
 import argparse
 import os
 
-# import wandb
+import wandb
 
 from model import do_train
 
@@ -150,8 +150,8 @@ def get_config():
 
 if __name__ == "__main__":
     config = get_config()
-    # wandb.init(
-    # project=config.project_name,
-    # name=config.run_name,
-    # )
+    wandb.init(
+        project=config.project_name,
+        name=config.run_name,
+    )
     do_train(config)
