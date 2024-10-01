@@ -57,7 +57,7 @@ def make_trainer(train_config, model, tokenizer):
         warmup_steps=train_config.warmup_steps,  # number of warmup steps for learning rate scheduler
         learning_rate=train_config.lr,
         weight_decay=train_config.weight_decay,  # strength of weight decay
-        # fp16=train_config.fp16,                             # device가 CUDA일때만 사용 가능하다.
+        fp16=train_config.fp16,                             # device가 CUDA일때만 사용 가능하다.
         gradient_accumulation_steps=train_config.gradient_accumulation_steps,  # n steps 만큼 가중치를 업데이트 하지 않고, 한번에 업데이트
         logging_dir=train_config.logging_dir,  # directory for storing logs
         logging_strategy="epoch",
@@ -168,6 +168,7 @@ def inference(config):
     print(type(test_dataset), type(test_loader))
 
     answer = []
+    print('Inference Start!')
     for data in tqdm(test_loader):
         input_ids = data["input_ids"].to(device)
         token_type_ids = data["token_type_ids"].to(device)

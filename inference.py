@@ -35,7 +35,7 @@ def get_config():
     )
 
     parser.add_argument(
-        "--max_len",
+        "--max-len",
         default=20,
         type=int,
     )
