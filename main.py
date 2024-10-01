@@ -155,3 +155,4 @@ if __name__ == "__main__":
         name=config.run_name,
     )
     do_train(config)
+    wandb.finish()
