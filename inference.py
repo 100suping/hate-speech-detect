@@ -45,6 +45,13 @@ def get_config():
         default=42,
         type=int,
     )
+    
+    parser.add_argument(
+        "--test-run",
+        default=0,
+        choices=[0, 1],
+        type=int,
+    )
 
     config = parser.parse_args()
     return config

@@ -74,10 +74,15 @@ def get_dataset(config, tokenizer, type_="train", submission=False):
     """zip파일에서 필요한 데이터를 불러와 Trainer가 원하는 형태인
     pytorch Dataset 형태로 바꾸어 주는 과정이 담긴 허브 함수입니다."""
 
+    # config의 test_run 값에 따라서 데이터를 얼마나 불러올지 결정
+    if config.test_run:
+        flag = 500
+    else:
+        flag = -1
     # jsonl -> pd.DataFrame
     df = jsonl_to_pandas(
         config.dataset_dir, config.zip_path, type_=type_, submission=submission
-    )[:500]
+    )[:flag]
     if submission:
         return df
 
