@@ -1,18 +1,19 @@
 import argparse
 import os
+
 # import wandb
 
 from model import do_train
 
+
 def get_config():
-    """argparse를 이용해 사용자에게 하이퍼 파라미터를 입력 받는 함수입니다.
-    """
-    
+    """argparse를 이용해 사용자에게 하이퍼 파라미터를 입력 받는 함수입니다."""
+
     # 여러 정보들이 저장될 디렉터리 생성
-    os.makedirs("/root/exp/data" ,exist_ok=True)
-    os.makedirs("/root/exp/model" ,exist_ok=True)
-    os.makedirs("/root/exp/ckpts" ,exist_ok=True)
-    os.makedirs("/root/exp/logs" ,exist_ok=True)
+    os.makedirs("/root/exp/data", exist_ok=True)
+    os.makedirs("/root/exp/model", exist_ok=True)
+    os.makedirs("/root/exp/ckpts", exist_ok=True)
+    os.makedirs("/root/exp/logs", exist_ok=True)
     # parser 생성
     parser = argparse.ArgumentParser(
         prog="Get Hyperparameters",
@@ -26,20 +27,20 @@ def get_config():
 
     parser.add_argument(
         "--zip-path",
-        default='/root/exp/data/NIKL_AU_2023_v1.0_JSONL.zip',
+        default="/root/exp/data/NIKL_AU_2023_v1.0_JSONL.zip",
         type=str,
     )
 
     parser.add_argument(
         "--dataset-dir",
-        default='/root/exp/NIKL_AU_2023_COMPETITION_v1.0',
+        default="/root/exp/NIKL_AU_2023_COMPETITION_v1.0",
         type=str,
     )
 
     parser.add_argument(
         "--model-type",
-        default='electra',
-        choices=['electra', 'bert', 'roberta'],
+        default="electra",
+        choices=["electra", "bert", "roberta"],
         type=str,
     )
 
@@ -52,13 +53,13 @@ def get_config():
 
     parser.add_argument(
         "--save-dir",
-        default='/root/exp/model',
+        default="/root/exp/model",
         type=str,
     )
 
     parser.add_argument(
         "--ckpt-dir",
-        default='/root/exp/ckpts',
+        default="/root/exp/ckpts",
         type=str,
     )
 
@@ -75,11 +76,7 @@ def get_config():
         type=int,
     )
 
-    parser.add_argument(
-        "--epochs",
-        default=10,
-        type=int
-    )
+    parser.add_argument("--epochs", default=10, type=int)
 
     parser.add_argument(
         "--batch-size",
@@ -122,22 +119,14 @@ def get_config():
         default=10,
         type=int,
     )
-    
-    parser.add_argument(
-        "--patience",
-        default=3,
-        type=int
-    )
-    
-    parser.add_argument(
-        "--threshold",
-        default=0.0,
-        type=float
-    )
+
+    parser.add_argument("--patience", default=3, type=int)
+
+    parser.add_argument("--threshold", default=0.0, type=float)
 
     parser.add_argument(
         "--run-name",
-        default='-t',
+        default="-t",
         type=str,
     )
 
@@ -150,6 +139,7 @@ def get_config():
     config = parser.parse_args()
 
     return config
+
 
 if __name__ == "__main__":
     config = get_config()
