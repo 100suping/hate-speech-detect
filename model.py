@@ -188,9 +188,13 @@ def inference(config):
 
     answer = np.concatenate(answer, axis=0)
 
+    from datetime import datetime
+
+    now = datetime.now()
+
     submission_df["output"] = answer
     submission_df.to_json(
-        "/root/exp/results/submission.json",
+        f"/root/exp/results/submission{now.month}_{now.day}_{now.hour}_{now.minute}.json",
         orient="records",
         force_ascii=False,
         lines=True,
