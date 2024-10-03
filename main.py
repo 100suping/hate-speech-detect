@@ -10,10 +10,10 @@ def get_config():
     """argparse를 이용해 사용자에게 하이퍼 파라미터를 입력 받는 함수입니다."""
 
     # 여러 정보들이 저장될 디렉터리 생성
-    os.makedirs("/root/exp/data", exist_ok=True)
-    os.makedirs("/root/exp/model", exist_ok=True)
-    os.makedirs("/root/exp/ckpts", exist_ok=True)
-    os.makedirs("/root/exp/logs", exist_ok=True)
+    # os.makedirs("/root/exp/data", exist_ok=True)
+    # os.makedirs("/root/exp/model", exist_ok=True)
+    # os.makedirs("/root/exp/ckpts", exist_ok=True)
+    # os.makedirs("/root/exp/logs", exist_ok=True)
     # parser 생성
     parser = argparse.ArgumentParser(
         prog="Get Hyperparameters",
@@ -141,6 +141,13 @@ def get_config():
         default=0,
         choices=[0, 1],
         type=int,
+    )
+    
+    parser.add_argument(
+        "--neftune_noise_alpha",
+        type=int,
+        default=0.1,
+        help="학습 시 임베딩 벡터에 노이즈를 추가하여 성능을 향상시킬 수 있는 허깅페이스 옵션"
     )
 
     config = parser.parse_args()

@@ -52,6 +52,12 @@ def get_config():
         choices=[0, 1],
         type=int,
     )
+    
+    parser.add_argument(
+        "--result_dir",
+        type=str,
+        default="/home/hiyo2044/hate-speech-detect/result",
+    )
 
     config = parser.parse_args()
     return config
