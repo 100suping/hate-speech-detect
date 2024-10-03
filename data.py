@@ -78,7 +78,7 @@ def get_dataset(config, tokenizer, type_="train", submission=False):
     if config.test_run:
         flag = 500
     else:
-        flag = -1
+        flag = None
     # jsonl -> pd.DataFrame
     df = jsonl_to_pandas(
         config.dataset_dir, config.zip_path, type_=type_, submission=submission
