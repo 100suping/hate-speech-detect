@@ -71,6 +71,7 @@ def make_trainer(train_config, model, tokenizer):
         report_to="wandb",
         # disable_tqdm=True,
         seed=42,  # Seed for experiment reproducibility 3x3
+        neftune_noise_alpha=train_config.neftune_noise_alpha,
     )
 
     # 데이터
@@ -145,7 +146,7 @@ def do_train(config):
 
 
 def inference(config):
-    os.makedirs("/root/exp/results", exist_ok=True)
+    os.makedirs(config.result_dir, exist_ok=True)
     # seed값 고정
     set_seed(config.seed)
 
@@ -194,7 +195,7 @@ def inference(config):
 
     submission_df["output"] = answer
     submission_df.to_json(
-        f"/root/exp/results/submission{now.month}_{now.day}_{now.hour}_{now.minute}.json",
+        f"/home/hiyo2044/hate-speech-detect/result/{now.month}_{now.day}_{now.hour}_{now.minute}.json",
         orient="records",
         force_ascii=False,
         lines=True,
