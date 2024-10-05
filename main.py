@@ -73,7 +73,7 @@ def get_config():
 
     parser.add_argument(
         "--logging-dir",
-        default="/root/exp/logs",
+        default="logs",
         type=str,
         help="로컬에 로깅을 진행 할 시, --run-name 아래에 로깅이 저장될 디렉터리",
     )
@@ -130,7 +130,7 @@ def get_config():
     )
 
     parser.add_argument(
-        "--neftune_noise_alpha",
+        "--neftune-noise-alpha",
         type=int,
         default=0.1,
         help="학습 시 임베딩 벡터에 노이즈를 추가하여 성능을 향상시킬 수 있는 허깅페이스 옵션",
