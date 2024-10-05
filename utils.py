@@ -1,7 +1,7 @@
 from transformers import Trainer, TrainerCallback
 import torch
 import numpy as np
-import random
+import random, os
 from sklearn.metrics import f1_score
 
 
@@ -93,3 +93,14 @@ def set_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
     print(f"seed value is {seed}")
+
+
+def set_experiment_dir(run_name, save_dir, ckpt_dir, logging_dir):
+    """argparse로 받은 경로들을 이용하여 실험의 각 요소들이 저장될 디렉터리를 만들어주는 함수입니다."""
+    save_path = os.path.join(run_name, save_dir)
+    ckpt_path = os.path.join(run_name, ckpt_dir)
+    logging_path = os.path.join(run_name, logging_dir)
+
+    os.makedirs(save_path, exist_ok=True)
+    os.makedirs(ckpt_path, exist_ok=True)
+    os.makedirs(logging_path, exist_ok=True)

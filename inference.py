@@ -10,15 +10,25 @@ def get_config():
     )
 
     parser.add_argument(
-        "--dataset-dir",
-        default="/root/exp/NIKL_AU_2023_COMPETITION_v1.0",
+        "--run-name",
+        default="test",
         type=str,
+        help="train에서 쓰인 run_name",
     )
 
     parser.add_argument(
-        "--zip-path",
-        default="/root/exp/data/NIKL_AU_2023_v1.0_JSONL.zip",
+        "--dataset-dir",
+        default="100suping/malpyeong-hate-speech",
         type=str,
+        help="허깅페이스 허브에 있는 데이터셋 경로 [user_id/repo_name]",
+    )
+
+    parser.add_argument(
+        "--dataset-revision",
+        default="main",
+        type=str,
+        choices=["main", "delete", "drop"],
+        help="허깅페이스 허브에 있는 데이터셋의 브랜치",
     )
 
     parser.add_argument(
@@ -52,9 +62,9 @@ def get_config():
         choices=[0, 1],
         type=int,
     )
-    
+
     parser.add_argument(
-        "--result_dir",
+        "--result-dir",
         type=str,
         default="/home/hiyo2044/hate-speech-detect/result",
     )

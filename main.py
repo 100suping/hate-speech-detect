@@ -4,16 +4,12 @@ import os
 import wandb
 
 from model import do_train
+from utils import set_experiment_dir
 
 
 def get_config():
     """argparse를 이용해 사용자에게 하이퍼 파라미터를 입력 받는 함수입니다."""
 
-    # 여러 정보들이 저장될 디렉터리 생성
-    # os.makedirs("/root/exp/data", exist_ok=True)
-    # os.makedirs("/root/exp/model", exist_ok=True)
-    # os.makedirs("/root/exp/ckpts", exist_ok=True)
-    # os.makedirs("/root/exp/logs", exist_ok=True)
     # parser 생성
     parser = argparse.ArgumentParser(
         prog="Get Hyperparameters",
@@ -26,15 +22,25 @@ def get_config():
     )
 
     parser.add_argument(
-        "--zip-path",
-        default="/root/exp/data/NIKL_AU_2023_v1.0_JSONL.zip",
+        "--run-name",
+        default="test",
         type=str,
+        help="wandb에서 쓰일 run_name",
     )
 
     parser.add_argument(
         "--dataset-dir",
-        default="/root/exp/NIKL_AU_2023_COMPETITION_v1.0",
+        default="100suping/malpyeong-hate-speech",
         type=str,
+        help="허깅페이스 허브에 있는 데이터셋 경로 [user_id/repo_name]",
+    )
+
+    parser.add_argument(
+        "--dataset-revision",
+        default="main",
+        type=str,
+        choices=["main", "delete", "drop"],
+        help="허깅페이스 허브에 있는 데이터셋의 브랜치",
     )
 
     parser.add_argument(
@@ -53,20 +59,23 @@ def get_config():
 
     parser.add_argument(
         "--save-dir",
-        default="/root/exp/model",
+        default="model",
         type=str,
+        help="로컬에 모델을 저장할 때, --run-name 아래에 모델과 config가 저장될 디렉터리",
     )
 
     parser.add_argument(
         "--ckpt-dir",
-        default="/root/exp/ckpts",
+        default="ckpts",
         type=str,
+        help="로컬에 모델 체크포인트를 저장할 시, --run-name 아래에 체크포인트가 저장될 디렉터리",
     )
 
     parser.add_argument(
         "--logging-dir",
         default="/root/exp/logs",
         type=str,
+        help="로컬에 로깅을 진행 할 시, --run-name 아래에 로깅이 저장될 디렉터리",
     )
 
     parser.add_argument(
@@ -120,15 +129,16 @@ def get_config():
         type=int,
     )
 
+    parser.add_argument(
+        "--neftune_noise_alpha",
+        type=int,
+        default=0.1,
+        help="학습 시 임베딩 벡터에 노이즈를 추가하여 성능을 향상시킬 수 있는 허깅페이스 옵션",
+    )
+
     parser.add_argument("--patience", default=3, type=int)
 
     parser.add_argument("--threshold", default=0.0, type=float)
-
-    parser.add_argument(
-        "--run-name",
-        default="-t",
-        type=str,
-    )
 
     parser.add_argument(
         "--seed",
@@ -142,13 +152,6 @@ def get_config():
         choices=[0, 1],
         type=int,
     )
-    
-    parser.add_argument(
-        "--neftune_noise_alpha",
-        type=int,
-        default=0.1,
-        help="학습 시 임베딩 벡터에 노이즈를 추가하여 성능을 향상시킬 수 있는 허깅페이스 옵션"
-    )
 
     config = parser.parse_args()
 
@@ -157,9 +160,14 @@ def get_config():
 
 if __name__ == "__main__":
     config = get_config()
-    wandb.init(
-        project=config.project_name,
-        name=config.run_name,
+    os.makedirs(config.run_name)
+    # 경로 생성
+    set_experiment_dir(
+        config.run_name, config.save_dir, config.ckpt_dir, config.logging_dir
     )
+    # wandb.init(
+    #     project=config.project_name,
+    #     name=config.run_name,
+    # )
     do_train(config)
-    wandb.finish()
+    # wandb.finish()

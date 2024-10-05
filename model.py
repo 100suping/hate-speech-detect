@@ -38,10 +38,10 @@ def load_model_and_tokenizer(config):
     return model, tokenizer
 
 
-def load_model_and_tokenizer_for_inference(save_dir, model_name):
+def load_model_and_tokenizer_for_inference(save_dir, model_name, run_name):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(
-        os.path.join(save_dir, model_name), local_files_only=True
+        os.path.join(run_name, save_dir), local_files_only=True
     )
 
     return model, tokenizer
@@ -124,9 +124,6 @@ def do_train(config):
     # seed값 고정
     set_seed(config.seed)
 
-    # 결과 저장 장소 생성
-    os.makedirs(config.ckpt_dir, exist_ok=True)
-
     # device 지정
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Current device is {device}.")
@@ -140,9 +137,8 @@ def do_train(config):
 
     # 학습
     trainer.train()
-    # 저장
-    os.makedirs(config.save_dir, exist_ok=True)
-    model.save_pretrained(os.path.join(config.save_dir, config.model_name))
+
+    model.save_pretrained(os.path.join(config.run_name, config.save_dir))
 
 
 def inference(config):
@@ -155,7 +151,7 @@ def inference(config):
     print(f"Current device is {device}.")
 
     model, tokenizer = load_model_and_tokenizer_for_inference(
-        config.save_dir, config.model_name
+        config.save_dir, config.model_name, config.run_name
     )
     model.to(device)
 
@@ -192,10 +188,12 @@ def inference(config):
     from datetime import datetime
 
     now = datetime.now()
+    timestamp = f"{now.month}_{now.day}_{now.hour}_{now.minute}_{now.second}"
 
     submission_df["output"] = answer
+    result_path = os.path.join(config.result_dir, timestamp)
     submission_df.to_json(
-        f"/home/hiyo2044/hate-speech-detect/result/{now.month}_{now.day}_{now.hour}_{now.minute}.json",
+        f"{result_path}.json",
         orient="records",
         force_ascii=False,
         lines=True,
