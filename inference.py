@@ -33,7 +33,7 @@ def get_config():
 
     parser.add_argument(
         "--save-dir",
-        default="/root/exp/model",
+        default="model",
         type=str,
     )
 
@@ -66,7 +66,7 @@ def get_config():
     parser.add_argument(
         "--result-dir",
         type=str,
-        default="/home/hiyo2044/hate-speech-detect/result",
+        default="result",
     )
 
     config = parser.parse_args()

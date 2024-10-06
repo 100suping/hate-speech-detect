@@ -11,7 +11,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 
-from data import get_dataset
+from data import get_dataset_hf, data_collator_for_label_reshape, data_collator
 from utils import MyTrainer, MyTrainerCallback, compute_metrics, set_seed
 
 
@@ -39,18 +39,20 @@ def load_model_and_tokenizer(config):
 
 
 def load_model_and_tokenizer_for_inference(save_dir, model_name, run_name):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    save_path = os.path.join("exp", run_name, save_dir)
+    tokenizer = AutoTokenizer.from_pretrained(save_path, local_files_only=True)
     model = AutoModelForSequenceClassification.from_pretrained(
-        os.path.join(run_name, save_dir), local_files_only=True
+        save_path, local_files_only=True
     )
 
     return model, tokenizer
 
 
 def make_trainer(train_config, model, tokenizer):
+    ckpt_path = os.path.join("exp", train_config.ckpt_dir)
     # Arguments
     training_args = TrainingArguments(
-        output_dir=train_config.ckpt_dir,  # output directory
+        output_dir=ckpt_path,  # output directory
         num_train_epochs=train_config.epochs,  # total number of training epochs
         per_device_train_batch_size=train_config.batch_size,  # batch size per device during training default: 8
         per_device_eval_batch_size=train_config.batch_size,  # batch size for evaluation default: 8
@@ -67,7 +69,7 @@ def make_trainer(train_config, model, tokenizer):
         save_strategy="epoch",
         save_total_limit=3,
         load_best_model_at_end=True,
-        run_name=train_config.run_name,  # [matthewburke/korean_sentiment, beomi/korean-hatespeech-multilabel]
+        run_name=train_config.run_name,
         report_to="wandb",
         # disable_tqdm=True,
         seed=42,  # Seed for experiment reproducibility 3x3
@@ -75,9 +77,11 @@ def make_trainer(train_config, model, tokenizer):
     )
 
     # 데이터
-    train_dataset, valid_dataset = get_dataset(
+    train_dataset, valid_dataset = get_dataset_hf(
         train_config, tokenizer=tokenizer, type_="train", submission=False
-    ), get_dataset(train_config, tokenizer=tokenizer, type_="valid", submission=False)
+    ), get_dataset_hf(
+        train_config, tokenizer=tokenizer, type_="valid", submission=False
+    )
 
     # optimizer, scheduler
     optimizer = torch.optim.AdamW(
@@ -115,6 +119,7 @@ def make_trainer(train_config, model, tokenizer):
         compute_metrics=compute_metrics,
         callbacks=[early_stopping, MyTrainerCallback],
         optimizers=(optimizer, lr_scheduler),
+        data_collator=data_collator_for_label_reshape,
         loss_name=loss_name,
     )
     return my_trainer
@@ -137,12 +142,14 @@ def do_train(config):
 
     # 학습
     trainer.train()
-
-    model.save_pretrained(os.path.join(config.run_name, config.save_dir))
+    save_path = os.path.join("exp", config.run_name, config.save_dir)
+    model.save_pretrained(save_path)
+    tokenizer.save_pretrained(save_path)
 
 
 def inference(config):
-    os.makedirs(config.result_dir, exist_ok=True)
+    result_path = os.path.join("exp", config.result_dir)
+    os.makedirs(result_path, exist_ok=True)
     # seed값 고정
     set_seed(config.seed)
 
@@ -155,13 +162,15 @@ def inference(config):
     )
     model.to(device)
 
-    test_dataset = get_dataset(
+    test_dataset = get_dataset_hf(
         config, tokenizer=tokenizer, type_="test", submission=False
     )
-    submission_df = get_dataset(
+    submission_df = get_dataset_hf(
         config, tokenizer=tokenizer, type_="test", submission=True
     )
-    test_loader = DataLoader(dataset=test_dataset, batch_size=32, shuffle=False)
+    test_loader = DataLoader(
+        dataset=test_dataset, batch_size=32, shuffle=False, collate_fn=data_collator
+    )
 
     answer = []
     print("Inference Start!")
@@ -191,7 +200,7 @@ def inference(config):
     timestamp = f"{now.month}_{now.day}_{now.hour}_{now.minute}_{now.second}"
 
     submission_df["output"] = answer
-    result_path = os.path.join(config.result_dir, timestamp)
+    result_path = os.path.join("exp", config.result_dir, timestamp)
     submission_df.to_json(
         f"{result_path}.json",
         orient="records",

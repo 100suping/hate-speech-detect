@@ -97,9 +97,9 @@ def set_seed(seed):
 
 def set_experiment_dir(run_name, save_dir, ckpt_dir, logging_dir):
     """argparse로 받은 경로들을 이용하여 실험의 각 요소들이 저장될 디렉터리를 만들어주는 함수입니다."""
-    save_path = os.path.join(run_name, save_dir)
-    ckpt_path = os.path.join(run_name, ckpt_dir)
-    logging_path = os.path.join(run_name, logging_dir)
+    save_path = os.path.join("exp", run_name, save_dir)
+    ckpt_path = os.path.join("exp", run_name, ckpt_dir)
+    logging_path = os.path.join("exp", run_name, logging_dir)
 
     os.makedirs(save_path, exist_ok=True)
     os.makedirs(ckpt_path, exist_ok=True)

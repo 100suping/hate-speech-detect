@@ -2,6 +2,8 @@ import argparse
 import os
 
 import wandb
+from huggingface_hub import login
+from dotenv import load_dotenv
 
 from model import do_train
 from utils import set_experiment_dir
@@ -159,16 +161,21 @@ def get_config():
 
 
 if __name__ == "__main__":
+    load_dotenv()
+
     config = get_config()
     run_path = os.path.join("exp", config.run_name)
-    os.makedirs(run_path)
+    os.makedirs(run_path, exist_ok=True)
     # 경로 생성
     set_experiment_dir(
         config.run_name, config.save_dir, config.ckpt_dir, config.logging_dir
     )
-    # wandb.init(
-    #     project=config.project_name,
-    #     name=config.run_name,
-    # )
+    # huggingface hub, wandb 로그인
+    login()
+    wandb.login()
+    wandb.init(
+        project=config.project_name,
+        name=config.run_name,
+    )
     do_train(config)
-    # wandb.finish()
+    wandb.finish()
