@@ -4,6 +4,8 @@ from transformers import (
     TrainingArguments,
     get_linear_schedule_with_warmup,
     EarlyStoppingCallback,
+    AutoModelForMaskedLM,
+    DataCollatorForLanguageModeling,
 )
 import os
 from tqdm import tqdm
@@ -207,3 +209,76 @@ def inference(config):
         force_ascii=False,
         lines=True,
     )
+
+
+def make_trainer_for_pretraining(config, model, tokenizer):
+    ckpt_path = os.path.join(config.absolute_dir, config.ckpt_dir)
+    training_args = TrainingArguments(
+        output_dir=ckpt_path,
+        overwrite_output_dir=True,
+        num_train_epochs=config.epochs,
+        per_device_train_batch_size=config.batch_size,  # batch size per device during training default: 8
+        per_device_eval_batch_size=config.batch_size,  # batch size for evaluation default: 8
+        warmup_steps=config.warmup_steps,  # number of warmup steps for learning rate scheduler
+        learning_rate=config.lr,
+        weight_decay=config.weight_decay,  # strength of weight decay
+        fp16=config.fp16,  # device가 CUDA일때만 사용 가능하다.
+        gradient_accumulation_steps=config.gradient_accumulation_steps,  # n steps 만큼 가중치를 업데이트 하지 않고, 한번에 업데이트
+        neftune_noise_alpha=config.neftune_noise_alpha,
+        logging_dir=config.logging_dir,  # directory for storing logs
+        logging_strategy="steps",
+        logging_steps=500,
+        do_train=True,  # Perform training
+        do_eval=True,  # Perform evaluation
+        eval_strategy="epoch",  # evalute after each epoch
+        save_strategy="epoch",
+        save_total_limit=1,
+        load_best_model_at_end=True,
+        run_name=config.run_name,
+        report_to="wandb",
+        seed=42,
+    )
+    # set data
+    train_dataset = get_dataset_hf(config, tokenizer, type_="train", submission=False)
+    valid_dataset = get_dataset_hf(config, tokenizer, type_="valid", submission=False)
+
+    # set data collator for mlm
+    # DataCollatorForSOP로 변경시 SOP 사용 가능 (DataCollatorForLanguageModeling)
+    # Dynamic padding 기능 또한 가지고 있다.
+    data_collator = DataCollatorForLanguageModeling(
+        tokenizer=tokenizer, mlm=True, mlm_probability=0.15  # 0.3
+    )
+
+    # set Trainer class for pre-training
+    trainer = MyTrainer(
+        model=model,
+        args=training_args,
+        data_collator=data_collator,
+        train_dataset=train_dataset,
+        eval_dataset=valid_dataset,
+    )
+
+    return trainer
+
+
+def do_pre_train(config):
+
+    # set device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("device:", device)
+
+    # set model and tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+    model = AutoModelForMaskedLM.from_pretrained(config.model_name)
+    model.to(device)
+
+    # set trainer
+    trainer = make_trainer_for_pretraining(config, model, tokenizer)
+
+    # train model
+    print("--- Start train ---")
+    trainer.train()
+    print("--- Finish train ---")
+    save_path = os.path.join(config.absolute_dir, config.run_name, config.save_dir)
+    print(f"model_saved at {save_path}")
+    model.save_pretrained(save_path)

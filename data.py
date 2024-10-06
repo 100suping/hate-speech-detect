@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import Dataset
 from torch import FloatTensor, LongTensor
 from datasets import load_dataset
+from utils import MyDataset
 
 
 ############### From local zip file ###############
@@ -148,14 +149,18 @@ def get_dataset_hf(config, tokenizer, type_="train", submission=False):
     if submission:
         return pd.DataFrame(data)
 
-    # mapping
-    tokenized_data = data.map(
-        tokenize_hf_dataset,
-        batched=True,
-        fn_kwargs={"tokenizer": tokenizer, "max_len": config.max_len},
-    )
-    # ToDo: 다음에 데이터 셋을 저장할 때, true 값을 output이 아니라 label column에 저장할 것
-    tokenized_data = tokenized_data.rename_column("output", "label")
+    if config.dataset_dir == "100suping/malpyeong-hate-speech":
+        # mapping
+        tokenized_data = data.map(
+            tokenize_hf_dataset,
+            batched=True,
+            fn_kwargs={"tokenizer": tokenizer, "max_len": config.max_len},
+        )
+        # ToDo: 다음에 데이터 셋을 저장할 때, true 값을 output이 아니라 label column에 저장할 것
+
+        tokenized_data = tokenized_data.rename_column("output", "label")
+    else:
+        tokenized_data = MyDataset(tokenizer, data["text"])
 
     return tokenized_data
 

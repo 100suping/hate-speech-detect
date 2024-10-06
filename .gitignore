@@ -162,6 +162,7 @@ cython_debug/
 #.idea/
 
 exp/
+pt/
 wandb
 
 *.sh

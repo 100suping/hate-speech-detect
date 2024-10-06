@@ -95,12 +95,41 @@ def set_seed(seed):
     print(f"seed value is {seed}")
 
 
-def set_experiment_dir(run_name, save_dir, ckpt_dir, logging_dir):
+def set_experiment_dir(run_name, save_dir, ckpt_dir, logging_dir, absolute_dir="exp"):
     """argparse로 받은 경로들을 이용하여 실험의 각 요소들이 저장될 디렉터리를 만들어주는 함수입니다."""
-    save_path = os.path.join("exp", run_name, save_dir)
-    ckpt_path = os.path.join("exp", run_name, ckpt_dir)
-    logging_path = os.path.join("exp", run_name, logging_dir)
+    save_path = os.path.join(absolute_dir, run_name, save_dir)
+    ckpt_path = os.path.join(absolute_dir, run_name, ckpt_dir)
+    logging_path = os.path.join(absolute_dir, run_name, logging_dir)
 
     os.makedirs(save_path, exist_ok=True)
     os.makedirs(ckpt_path, exist_ok=True)
     os.makedirs(logging_path, exist_ok=True)
+
+
+class MyDataset(torch.utils.data.Dataset):
+    def __init__(self, tokenizer, data, block_size=512):
+
+        batch_encoding = tokenizer(
+            data,
+            truncation=True,
+            max_length=block_size,
+            add_special_tokens=True,
+        )
+        self.examples = [
+            {
+                "input_ids": torch.tensor(i, dtype=torch.long),
+                "token_type_ids": torch.tensor(tk, dtype=torch.long),
+                "attention_mask": torch.tensor(a, dtype=torch.long),
+            }
+            for i, tk, a in zip(
+                batch_encoding["input_ids"],
+                batch_encoding["token_type_ids"],
+                batch_encoding["attention_mask"],
+            )
+        ]
+
+    def __len__(self):
+        return len(self.examples)
+
+    def __getitem__(self, i):
+        return self.examples[i]
