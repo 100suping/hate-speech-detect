@@ -61,21 +61,21 @@ def get_config():
         "--save-dir",
         default="model",
         type=str,
-        help="로컬에 모델을 저장할 때, --run-name 아래에 모델과 config가 저장될 디렉터리",
+        help="로컬에 모델을 저장할 때, exp/--run-name 아래에 모델과 config가 저장될 디렉터리",
     )
 
     parser.add_argument(
         "--ckpt-dir",
         default="ckpts",
         type=str,
-        help="로컬에 모델 체크포인트를 저장할 시, --run-name 아래에 체크포인트가 저장될 디렉터리",
+        help="로컬에 모델 체크포인트를 저장할 시, exp/--run-name 아래에 체크포인트가 저장될 디렉터리",
     )
 
     parser.add_argument(
         "--logging-dir",
         default="logs",
         type=str,
-        help="로컬에 로깅을 진행 할 시, --run-name 아래에 로깅이 저장될 디렉터리",
+        help="로컬에 로깅을 진행 할 시, exp/--run-name 아래에 로깅이 저장될 디렉터리",
     )
 
     parser.add_argument(
@@ -160,7 +160,8 @@ def get_config():
 
 if __name__ == "__main__":
     config = get_config()
-    os.makedirs(config.run_name)
+    run_path = os.path.join("exp", config.run_name)
+    os.makedirs(run_path)
     # 경로 생성
     set_experiment_dir(
         config.run_name, config.save_dir, config.ckpt_dir, config.logging_dir
