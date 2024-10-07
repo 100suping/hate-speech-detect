@@ -9,7 +9,7 @@ def check_data_on_wd(data_dir, zip_path, type_='train') -> List[str]:
     zip 파일을 압축 해제하는 함수입니다."""
     try:
         zip = zipfile.ZipFile(zip_path)
-        zip.extractall('/root/exp')
+        zip.extractall('./data')
     except:
         print('.zip파일이 존재하지 않습니다.')
     return glob.glob(f'{data_dir}/*{type_}.jsonl')
@@ -35,7 +35,7 @@ def jsonl_to_pandas(data_dir, zip_path, type_='train', submission=False) -> pd.D
 class Dataset_v1(Dataset):
     def __init__(self, data: Dict, train=True):
         self.input_ids = data['input_ids']
-        self.token_type_ids = data['token_type_ids']
+        self.token_type_ids = data['token_type_ids'] # 이건 gpt 계열에서 사용되지 않음 data.get('token_type_ids', None)
         self.attention_mask = data['attention_mask']
         self.train = train
         if self.train:
@@ -67,7 +67,7 @@ def get_dataset(config, tokenizer, type_='train', submission=False):
     pytorch Dataset 형태로 바꾸어 주는 과정이 담긴 허브 함수입니다.'''
 
     # jsonl -> pd.DataFrame
-    df = jsonl_to_pandas(config.dataset_dir, config.zip_path, type_=type_, submission=submission)[:500]
+    df = jsonl_to_pandas(config.dataset_dir, config.zip_path, type_=type_, submission=submission)
     if submission:
         return df
 

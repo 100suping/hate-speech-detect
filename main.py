@@ -9,10 +9,16 @@ def get_config():
     """
     
     # 여러 정보들이 저장될 디렉터리 생성
-    os.makedirs("/root/exp/data" ,exist_ok=True)
-    os.makedirs("/root/exp/model" ,exist_ok=True)
-    os.makedirs("/root/exp/ckpts" ,exist_ok=True)
-    os.makedirs("/root/exp/logs" ,exist_ok=True)
+    # os.makedirs("hj_code/data" ,exist_ok=True)
+    # os.makedirs("hj_code/model" ,exist_ok=True)
+    # os.makedirs("hj_code/ckpts" ,exist_ok=True)
+    # os.makedirs("hj_code/logs" ,exist_ok=True)
+
+    os.makedirs("./data" ,exist_ok=True)
+    os.makedirs("./model" ,exist_ok=True)
+    os.makedirs("./ckpts" ,exist_ok=True)
+    os.makedirs("./logs" ,exist_ok=True)
+
     # parser 생성
     parser = argparse.ArgumentParser(
         prog="Get Hyperparameters",
@@ -26,13 +32,13 @@ def get_config():
 
     parser.add_argument(
         "--zip-path",
-        default='/root/exp/data/NIKL_AU_2023_v1.0_JSONL.zip',
+        default='./data/NIKL_AU_2023_v1.0_JSONL.zip',
         type=str,
     )
 
     parser.add_argument(
         "--dataset-dir",
-        default='/root/exp/NIKL_AU_2023_COMPETITION_v1.0',
+        default='./data/NIKL_AU_2023_COMPETITION_v1.0',
         type=str,
     )
 
@@ -43,6 +49,14 @@ def get_config():
         type=str,
     )
 
+
+    # parser.add_argument(
+    #     "--model-name",
+    #     default="skt/ko-gpt-trinity-1.2B-v0.5", # gpt 모델은 token_type_ids 가 없음 
+    #     choices=["klue/roberta-base", "skt/ko-gpt-trinity-1.2B-v0.5", "beomi/korean-hatespeech-multilabel"],
+    #     type=str,
+    # )
+
     parser.add_argument(
         "--model-name",
         default="beomi/korean-hatespeech-multilabel",
@@ -52,19 +66,19 @@ def get_config():
 
     parser.add_argument(
         "--save-dir",
-        default='/root/exp/model',
+        default='./model',
         type=str,
     )
 
     parser.add_argument(
         "--ckpt-dir",
-        default='/root/exp/ckpts',
+        default='./ckpts',
         type=str,
     )
 
     parser.add_argument(
         "--logging-dir",
-        default="/root/exp/logs",
+        default="./logs",
         type=str,
     )
 
@@ -77,13 +91,13 @@ def get_config():
 
     parser.add_argument(
         "--epochs",
-        default=10,
+        default=15,
         type=int
     )
 
     parser.add_argument(
         "--batch-size",
-        default=32,
+        default=64,
         type=int,
     )
 
@@ -101,7 +115,7 @@ def get_config():
 
     parser.add_argument(
         "--lr",
-        default=5e-5,
+        default=8e-5,
         type=float,
     )
 
@@ -112,7 +126,9 @@ def get_config():
     )
 
     parser.add_argument(
-        "--fp16",
+        # "--fp16",  #맥북에서는 안된다고 하는데 파라미터로는 왜 될까?
+        # "--fp16",
+        "--bfloat16",
         default=True,
         type=bool,
     )

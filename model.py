@@ -24,7 +24,7 @@ def load_model_and_tokenizer(config):
 
 def load_model_and_tokenizer_for_inference(save_dir, model_name):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(os.path.join(save_dir, model_name), local_files_only=True)
+    model = AutoModelForSequenceClassification.from_pretrained(os.path.join(save_dir, model_name), local_files_only=False)
     
     return model, tokenizer
 
@@ -45,6 +45,7 @@ def make_trainer(train_config, model, tokenizer):
         logging_strategy='epoch',
         do_train=True,                   # Perform training
         do_eval=True,                    # Perform evaluation
+        
         evaluation_strategy="epoch",     # evalute after each epoch
         save_strategy="epoch",
         save_total_limit=3,
@@ -78,7 +79,7 @@ def make_trainer(train_config, model, tokenizer):
                             compute_metrics=compute_metrics,
                             callbacks=[early_stopping, MyTrainerCallback],
                             optimizers=(optimizer, lr_scheduler),
-                           loss_name=loss_name
+                            loss_name=loss_name
                             )
     return my_trainer
 
@@ -91,10 +92,11 @@ def do_train(config):
     os.makedirs(config.ckpt_dir, exist_ok=True)
     
     # device 지정
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Current device is {device}.")
     
-    # 모델
+    # 모델, 토크나이저
     model, tokenizer = load_model_and_tokenizer(config)
     model.to(device)
     
@@ -109,12 +111,13 @@ def do_train(config):
     
     
 def inference(config):
-    os.makedirs('/root/exp/results' ,exist_ok=True)
+    os.makedirs('./results' ,exist_ok=True)
     # seed값 고정
     set_seed(config.seed)
     
     # device 지정
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Current device is {device}.")
     
     model, tokenizer = load_model_and_tokenizer_for_inference(config.save_dir, config.model_name)
@@ -143,4 +146,4 @@ def inference(config):
     answer = np.concatenate(answer, axis=0)
     
     submission_df['output'] = answer
-    submission_df.to_json('/root/exp/results/submission.json', orient='records', force_ascii=False, lines=True)
+    submission_df.to_json('./results/submission.json', orient='records', force_ascii=False, lines=True)
