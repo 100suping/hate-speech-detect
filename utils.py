@@ -107,15 +107,8 @@ def set_experiment_dir(run_name, save_dir, ckpt_dir, logging_dir, absolute_dir="
 
 
 class MyDataset(torch.utils.data.Dataset):
-    def __init__(self, tokenizer, data, block_size=512):
+    def __init__(self, batch, block_size=512):
 
-        batch_encoding = tokenizer(
-            data,
-            truncation=True,
-            max_length=block_size,
-            add_special_tokens=True,
-        )
-        print("Tokenizing Done!")
         self.examples = [
             {
                 "input_ids": torch.tensor(i, dtype=torch.long),
@@ -123,9 +116,9 @@ class MyDataset(torch.utils.data.Dataset):
                 "attention_mask": torch.tensor(a, dtype=torch.long),
             }
             for i, tk, a in zip(
-                batch_encoding["input_ids"],
-                batch_encoding["token_type_ids"],
-                batch_encoding["attention_mask"],
+                batch["input_ids"],
+                batch["token_type_ids"],
+                batch["attention_mask"],
             )
         ]
 

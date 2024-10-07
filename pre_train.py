@@ -39,9 +39,9 @@ def get_config():
 
     parser.add_argument(
         "--dataset-revision",
-        default="main",
+        default="token-klue/roberta-base",
         type=str,
-        choices=["main"],
+        choices=["token-klue/roberta-base", "main"],
         help="허깅페이스 허브에 있는 데이터셋의 브랜치",
     )
 
