@@ -1,9 +1,11 @@
 python3 main.py \
+  --run-name flow_test3 \
+  --logging-steps 10 \
+  --use-local-zip 1 \
   --dataset-dir 100suping/malpyeong-hate-speech \
   --dataset-revision main \
   --model-type electra \
   --model-name beomi/korean-hatespeech-multilabel \
-  --run-name test \
   --save-dir model\
   --ckpt-dir ckpts\
   --num-labels 1 \
@@ -20,6 +22,8 @@ python3 main.py \
   --test-run 1 \
 
 python3 inference.py \
+  --use-local-zip 1 \
+  --run-name flow_test3 \
   --dataset-dir 100suping/malpyeong-hate-speech \
   --dataset-revision main \
   --save-dir model \

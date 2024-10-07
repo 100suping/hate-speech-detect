@@ -11,7 +11,12 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 
-from data import get_dataset_hf, data_collator_for_label_reshape, data_collator
+from data import (
+    get_dataset_hf,
+    get_dataset,
+    data_collator_for_label_reshape,
+    data_collator,
+)
 from utils import MyTrainer, MyTrainerCallback, compute_metrics, set_seed
 
 
@@ -38,7 +43,7 @@ def load_model_and_tokenizer(config):
     return model, tokenizer
 
 
-def load_model_and_tokenizer_for_inference(save_dir, model_name, run_name):
+def load_model_and_tokenizer_for_inference(save_dir, run_name):
     save_path = os.path.join("exp", run_name, save_dir)
     tokenizer = AutoTokenizer.from_pretrained(save_path, local_files_only=True)
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -59,10 +64,12 @@ def make_trainer(train_config, model, tokenizer):
         warmup_steps=train_config.warmup_steps,  # number of warmup steps for learning rate scheduler
         learning_rate=train_config.lr,
         weight_decay=train_config.weight_decay,  # strength of weight decay
-        fp16=train_config.fp16,  # device가 CUDA일때만 사용 가능하다.
+        # fp16=train_config.fp16,  # device가 CUDA일때만 사용 가능하다.
         gradient_accumulation_steps=train_config.gradient_accumulation_steps,  # n steps 만큼 가중치를 업데이트 하지 않고, 한번에 업데이트
+        neftune_noise_alpha=train_config.neftune_noise_alpha,
         logging_dir=train_config.logging_dir,  # directory for storing logs
-        logging_strategy="epoch",
+        logging_strategy="steps",
+        logging_steps=train_config.logging_steps,
         do_train=True,  # Perform training
         do_eval=True,  # Perform evaluation
         eval_strategy="epoch",  # evalute after each epoch
@@ -70,18 +77,27 @@ def make_trainer(train_config, model, tokenizer):
         save_total_limit=3,
         load_best_model_at_end=True,
         run_name=train_config.run_name,
-        report_to="wandb",
+        # report_to="wandb",
         # disable_tqdm=True,
         seed=42,  # Seed for experiment reproducibility 3x3
-        neftune_noise_alpha=train_config.neftune_noise_alpha,
     )
 
     # 데이터
-    train_dataset, valid_dataset = get_dataset_hf(
-        train_config, tokenizer=tokenizer, type_="train", submission=False
-    ), get_dataset_hf(
-        train_config, tokenizer=tokenizer, type_="valid", submission=False
-    )
+    if train_config.use_local_zip:
+        print("You're using Data from Local")
+        train_dataset, valid_dataset = get_dataset(
+            train_config, tokenizer=tokenizer, type_="train", submission=False
+        ), get_dataset(
+            train_config, tokenizer=tokenizer, type_="valid", submission=False
+        )
+
+    else:
+        print("You're using Data from Huggingface-hub")
+        train_dataset, valid_dataset = get_dataset_hf(
+            train_config, tokenizer=tokenizer, type_="train", submission=False
+        ), get_dataset_hf(
+            train_config, tokenizer=tokenizer, type_="valid", submission=False
+        )
 
     # optimizer, scheduler
     optimizer = torch.optim.AdamW(
@@ -119,7 +135,9 @@ def make_trainer(train_config, model, tokenizer):
         compute_metrics=compute_metrics,
         callbacks=[early_stopping, MyTrainerCallback],
         optimizers=(optimizer, lr_scheduler),
-        data_collator=data_collator_for_label_reshape,
+        data_collator=(
+            None if train_config.use_local_zip else data_collator_for_label_reshape
+        ),
         loss_name=loss_name,
     )
     return my_trainer
@@ -158,19 +176,34 @@ def inference(config):
     print(f"Current device is {device}.")
 
     model, tokenizer = load_model_and_tokenizer_for_inference(
-        config.save_dir, config.model_name, config.run_name
+        config.save_dir, config.run_name
     )
     model.to(device)
 
-    test_dataset = get_dataset_hf(
-        config, tokenizer=tokenizer, type_="test", submission=False
-    )
-    submission_df = get_dataset_hf(
-        config, tokenizer=tokenizer, type_="test", submission=True
-    )
-    test_loader = DataLoader(
-        dataset=test_dataset, batch_size=32, shuffle=False, collate_fn=data_collator
-    )
+    if config.use_local_zip:
+        print("You're using Data from Local")
+        test_dataset = get_dataset(
+            config, tokenizer=tokenizer, type_="test", submission=False
+        )
+        submission_df = get_dataset(
+            config, tokenizer=tokenizer, type_="test", submission=True
+        )
+        test_loader = DataLoader(
+            dataset=test_dataset,
+            batch_size=32,
+            shuffle=False,
+        )
+    else:
+        print("You're using Data from Huggingface-hub")
+        test_dataset = get_dataset_hf(
+            config, tokenizer=tokenizer, type_="test", submission=False
+        )
+        submission_df = get_dataset_hf(
+            config, tokenizer=tokenizer, type_="test", submission=True
+        )
+        test_loader = DataLoader(
+            dataset=test_dataset, batch_size=32, shuffle=False, collate_fn=data_collator
+        )
 
     answer = []
     print("Inference Start!")

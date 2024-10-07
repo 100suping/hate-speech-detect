@@ -11,27 +11,29 @@ from datasets import load_dataset
 
 
 ############### From local zip file ###############
-def check_data_on_wd(data_dir, zip_path, type_="train") -> List[str]:
+def check_data_on_wd(data_dir, type_="train") -> List[str]:
     """학습 및 테스트 데이터가 적절한 디렉터리에 있는지 검사하고 없다면,
     zip 파일을 압축 해제하는 함수입니다."""
     try:
-        zip = zipfile.ZipFile(zip_path)
-        zip.extractall("/root/exp")
+        zip = zipfile.ZipFile("./NIKL_AU_2023_v1.0_JSONL.zip")
+        zip.extractall("./")
+        print("압축 해제 완료")
     except:
-        print(".zip파일이 존재하지 않습니다.")
-    return glob.glob(f"{data_dir}/*{type_}.jsonl")
+        print(".zip파일이 pwd에 존재하지 않습니다.")
+    return glob.glob(f"./{data_dir}/*{type_}.jsonl")
 
 
-def jsonl_to_pandas(
-    data_dir, zip_path, type_="train", submission=False
-) -> pd.DataFrame:
+def jsonl_to_pandas(data_dir, type_="train", submission=False) -> pd.DataFrame:
     "data_dir에 존재하는 josnl 파일을 불러와 데이터 프레임화 하는 함수입니다."
     # 파일 이름이 valid가 아니라 dev로 되어 있다.
     if type_ == "valid":
         type_ = "dev"
     data_path = glob.glob(f"{data_dir}/*{type_}.jsonl")
     if not data_path:
-        data_path = check_data_on_wd(data_dir, zip_path, type_)
+        print(
+            "로컬에 데이터 파일이 존재하지 않습니다. 로컬의 zip 파일 압축해제를 시작합니다."
+        )
+        data_path = check_data_on_wd(data_dir, type_)
 
     temp_dicts = []
     with open(data_path[0], "r", encoding="utf-8") as f:
@@ -87,7 +89,7 @@ def get_dataset(config, tokenizer, type_="train", submission=False):
         flag = None
     # jsonl -> pd.DataFrame
     df = jsonl_to_pandas(
-        config.dataset_dir, config.zip_path, type_=type_, submission=submission
+        "./NIKL_AU_2023_COMPETITION_v1.0", type_=type_, submission=submission
     )[:flag]
     if submission:
         return df
@@ -139,7 +141,7 @@ def get_dataset_hf(config, tokenizer, type_="train", submission=False):
     if config.test_run:
         data = load_dataset(
             config.dataset_dir, revision=config.dataset_revision, split=type_
-        ).select(range(100))
+        ).select(range(500))
     else:
         data = load_dataset(
             config.dataset_dir, revision=config.dataset_revision, split=type_

@@ -1,7 +1,7 @@
 import argparse
 import os
 
-import wandb
+# import wandb
 from huggingface_hub import login
 from dotenv import load_dotenv
 
@@ -28,6 +28,20 @@ def get_config():
         default="test",
         type=str,
         help="wandb에서 쓰일 run_name",
+    )
+
+    parser.add_argument(
+        "--logging-steps",
+        default=10,
+        type=int,
+        help="wandb에서 업데이트 될 step 기준",
+    )
+
+    parser.add_argument(
+        "--use-local-zip",
+        default=1,
+        choices=[0, 1],
+        type=int,
     )
 
     parser.add_argument(
@@ -172,10 +186,10 @@ if __name__ == "__main__":
     )
     # huggingface hub, wandb 로그인
     login()
-    wandb.login()
-    wandb.init(
-        project=config.project_name,
-        name=config.run_name,
-    )
+    # wandb.login()
+    # wandb.init(
+    #     project=config.project_name,
+    #     name=config.run_name,
+    # )
     do_train(config)
-    wandb.finish()
+    # wandb.finish()

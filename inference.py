@@ -17,6 +17,13 @@ def get_config():
     )
 
     parser.add_argument(
+        "--use-local-zip",
+        default=1,
+        choices=[0, 1],
+        type=int,
+    )
+
+    parser.add_argument(
         "--dataset-dir",
         default="100suping/malpyeong-hate-speech",
         type=str,
