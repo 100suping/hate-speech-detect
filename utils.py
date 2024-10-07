@@ -115,6 +115,7 @@ class MyDataset(torch.utils.data.Dataset):
             max_length=block_size,
             add_special_tokens=True,
         )
+        print("Tokenizing Done!")
         self.examples = [
             {
                 "input_ids": torch.tensor(i, dtype=torch.long),

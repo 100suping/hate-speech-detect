@@ -141,10 +141,12 @@ def get_dataset_hf(config, tokenizer, type_="train", submission=False):
         data = load_dataset(
             config.dataset_dir, revision=config.dataset_revision, split=type_
         ).select(range(100))
+        print('Using TEST RUN DATASET')
     else:
         data = load_dataset(
             config.dataset_dir, revision=config.dataset_revision, split=type_
         )
+        print('Using WHOLE DATASET')
 
     if submission:
         return pd.DataFrame(data)

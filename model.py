@@ -241,6 +241,7 @@ def make_trainer_for_pretraining(config, model, tokenizer):
     # set data
     train_dataset = get_dataset_hf(config, tokenizer, type_="train", submission=False)
     valid_dataset = get_dataset_hf(config, tokenizer, type_="valid", submission=False)
+    print("Dataset is READY")
 
     # set data collator for mlm
     # DataCollatorForSOP로 변경시 SOP 사용 가능 (DataCollatorForLanguageModeling)
@@ -268,12 +269,16 @@ def do_pre_train(config):
     print("device:", device)
 
     # set model and tokenizer
+    print("Setting Model, Tokenizer")
     tokenizer = AutoTokenizer.from_pretrained(config.model_name)
     model = AutoModelForMaskedLM.from_pretrained(config.model_name)
     model.to(device)
+    print("Model, Tokenizer is READY")
 
     # set trainer
+    print("Setting Trainer")
     trainer = make_trainer_for_pretraining(config, model, tokenizer)
+    print("Trainer is set")
 
     # train model
     print("--- Start train ---")
