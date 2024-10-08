@@ -1,4 +1,4 @@
-from model import inference
+from model import inference, kfold_inference
 import argparse
 
 
@@ -75,6 +75,18 @@ def get_config():
         type=str,
         default="result",
     )
+    
+    parser.add_argument(
+        "--K_Fold",
+        type=int,
+        default=5,
+    )
+    
+    parser.add_argument(
+        "--K_Fold_Inference",
+        type=bool,
+        default=False
+    )
 
     config = parser.parse_args()
     return config
@@ -82,5 +94,8 @@ def get_config():
 
 if __name__ == "__main__":
     inference_config = get_config()
-
-    inference(inference_config)
+    
+    if inference_config.K_Fold_Inference:
+        kfold_inference(inference_config)
+    else:
+        inference(inference_config)
