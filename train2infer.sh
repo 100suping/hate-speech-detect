@@ -17,7 +17,7 @@ python3 main.py \
   --weight-decay 0.01 \
   --fp16 True \
   --gradient-accumulation-steps 2 \
-  --neftune-noise-alpha 5 \
+  --neftune-noise-alpha none \
   --patience 3 \
   --test-run 1 \
   --K_Fold_Train True \

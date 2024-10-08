@@ -5,8 +5,12 @@ import os
 from huggingface_hub import login
 from dotenv import load_dotenv
 
+
 from model import do_train, kfold_do_train
 from utils import set_experiment_dir
+
+from model import do_train
+from utils import set_experiment_dir, is_bool, is_int, is_int_float
 
 
 def get_config():
@@ -33,8 +37,8 @@ def get_config():
     parser.add_argument(
         "--logging-steps",
         default=10,
-        type=int,
-        help="wandb에서 업데이트 될 step 기준",
+        type=is_int,
+        help="wandb에서 업데이트 될 step 기준 비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
     parser.add_argument(
@@ -112,13 +116,15 @@ def get_config():
     parser.add_argument(
         "--max-len",
         default=20,
-        type=int,
+        type=is_int,
+        help="비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
     parser.add_argument(
         "--warmup-steps",
         default=100,
-        type=int,
+        type=is_int,
+        help="비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
     parser.add_argument(
@@ -136,20 +142,22 @@ def get_config():
     parser.add_argument(
         "--fp16",
         default=True,
-        type=bool,
+        type=is_bool,
+        help="비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
     parser.add_argument(
         "--gradient-accumulation-steps",
         default=10,
-        type=int,
+        type=is_int,
+        help="비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
     parser.add_argument(
         "--neftune-noise-alpha",
-        type=int,
-        default=0.1,
-        help="학습 시 임베딩 벡터에 노이즈를 추가하여 성능을 향상시킬 수 있는 허깅페이스 옵션",
+        default=None,
+        type=is_int_float,
+        help="학습 시 임베딩 벡터에 노이즈를 추가하여 성능을 향상시킬 수 있는 허깅페이스 옵션으로 비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
     parser.add_argument("--patience", default=3, type=int)

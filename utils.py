@@ -104,3 +104,39 @@ def set_experiment_dir(run_name, save_dir, ckpt_dir, logging_dir):
     os.makedirs(save_path, exist_ok=True)
     os.makedirs(ckpt_path, exist_ok=True)
     os.makedirs(logging_path, exist_ok=True)
+
+
+def is_bool(value):
+    if value == "none":
+        return None
+    if value == "true" or value == "True":
+        return True
+    else:
+        False
+
+
+def is_int_float(value):
+    if value == "none":
+        return None
+    if isinstance(value, (int, float, None)):
+        return value
+    else:
+        raise TypeError
+
+
+def is_int(value):
+    if value == "none":
+        return None
+    if isinstance(value, (int, None)):
+        return value
+    else:
+        raise TypeError
+
+
+def is_float(value):
+    if value == "none":
+        return None
+    if isinstance(value, (float, None)):
+        return value
+    else:
+        raise TypeError

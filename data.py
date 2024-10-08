@@ -21,7 +21,7 @@ def check_data_on_wd(data_dir, type_="train") -> List[str]:
         zip.extractall("./")
         print("압축 해제 완료")
     except:
-        print(".zip파일이 존재하지 않습니다.")
+        print(".zip파일이 pwd에 존재하지 않습니다.")
     return glob.glob(f"./{data_dir}/*{type_}.jsonl")
 
 
