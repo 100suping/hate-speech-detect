@@ -28,7 +28,7 @@ def jsonl_to_pandas(data_dir, type_="train", submission=False) -> pd.DataFrame:
     # 파일 이름이 valid가 아니라 dev로 되어 있다.
     if type_ == "valid":
         type_ = "dev"
-    data_path = glob.glob(f"{data_dir}/nikluge-au-2022-{type_}.jsonl")
+    data_path = glob.glob(f"{data_dir}/*{type_}.jsonl")
     if not data_path:
         print(
             "로컬에 데이터 파일이 존재하지 않습니다. 로컬의 zip 파일 압축해제를 시작합니다."
