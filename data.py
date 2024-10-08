@@ -16,10 +16,10 @@ def check_data_on_wd(data_dir, type_="train") -> List[str]:
     zip 파일을 압축 해제하는 함수입니다."""
     try:
         zip = zipfile.ZipFile("./NIKL_AU_2023_v1.0_JSONL.zip")
-        zip.extractall("./")
+        zip.extractall("./NIKL_AU_2023_v1.0_JSON/")
         print("압축 해제 완료")
     except:
-        print(".zip파일이 pwd에 존재하지 않습니다.")
+        print(".zip파일이 존재하지 않습니다.")
     return glob.glob(f"./{data_dir}/*{type_}.jsonl")
 
 
@@ -28,7 +28,7 @@ def jsonl_to_pandas(data_dir, type_="train", submission=False) -> pd.DataFrame:
     # 파일 이름이 valid가 아니라 dev로 되어 있다.
     if type_ == "valid":
         type_ = "dev"
-    data_path = glob.glob(f"{data_dir}/*{type_}.jsonl")
+    data_path = glob.glob(f"{data_dir}/nikluge-au-2022-{type_}.jsonl")
     if not data_path:
         print(
             "로컬에 데이터 파일이 존재하지 않습니다. 로컬의 zip 파일 압축해제를 시작합니다."
