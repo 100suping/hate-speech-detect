@@ -20,6 +20,7 @@ python3 main.py \
   --neftune-noise-alpha none \
   --patience 3 \
   --test-run 1 \
+  --K_Fold_Train True \
 
 python3 inference.py \
   --use-local-zip 1 \
@@ -29,4 +30,5 @@ python3 inference.py \
   --save-dir model \
   --model-name beomi/korean-hatespeech-multilabel \
   --max-len 20 \
-  --test-run 1
+  --test-run 1 \
+  --K_Fold_Inference True

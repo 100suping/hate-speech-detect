@@ -16,6 +16,7 @@ from data import (
     get_dataset,
     data_collator_for_label_reshape,
     data_collator,
+    kfold_datasets
 )
 from utils import MyTrainer, MyTrainerCallback, compute_metrics, set_seed
 
@@ -42,6 +43,14 @@ def load_model_and_tokenizer(config):
 
     return model, tokenizer
 
+# KFold 용 load_model_and_tokenizer_forinference, fold 값을 받아 save_dir/model_name/fold 경로 지정
+def KFold_load_model_and_tokenizer_for_inference(save_dir, run_name, fold):
+    save_path = os.path.join("exp", run_name, save_dir, fold)
+    tokenizer = AutoTokenizer.from_pretrained(save_path, local_files_only=True)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        save_path, local_files_only=True
+    )
+    return model, tokenizer
 
 def load_model_and_tokenizer_for_inference(save_dir, run_name):
     save_path = os.path.join("exp", run_name, save_dir)
@@ -240,3 +249,172 @@ def inference(config):
         force_ascii=False,
         lines=True,
     )
+    
+def ensemble(result_path):
+    import json
+    from collections import defaultdict, Counter
+    import glob
+    
+    # result 폴더에 이름이 result_ 인 json 파일 모두 불러오기
+    model_files = glob.glob(f'{result_path}/result_*.json')
+
+    # 각 모델의 예측 결과를 저장할 리스트
+    model_predictions = []
+
+    # 각 모델 파일을 한 줄씩 읽어 리스트에 추가
+    for file in model_files:
+        with open(file, 'r', encoding='utf-8') as f:
+            # 각 모델의 예측을 담을 리스트
+            predictions = []
+            for line in f:
+                # 각 줄을 json 객체로 파싱하여 predictions 리스트에 추가
+                predictions.append(json.loads(line.strip()))
+            model_predictions.append(predictions)
+            # print(file) # 확인용
+
+    # 각 id에 대해 예측값을 저장할 딕셔너리 생성
+    votes = defaultdict(list)
+    input_texts = {}
+
+    # 각 모델의 예측값을 샘플별로 모으기
+    for prediction in model_predictions:
+        for sample in prediction:
+            sample_id = sample['id']
+            sample_input = sample['input']
+            sample_output = sample['output']
+            votes[sample_id].append(sample_output)
+            # 각 샘플의 input 텍스트를 저장 (모든 모델에 동일하므로 한 번만 저장)
+            if sample_id not in input_texts:
+                input_texts[sample_id] = sample_input
+
+    # Hard Voting 결과 계산
+    hard_voting_result = []
+    for sample_id, pred_list in votes.items():
+        # 각 샘플의 예측값 리스트에서 다수결을 통한 최종 클래스 선택
+        final_prediction = Counter(pred_list).most_common(1)[0][0]
+        # 최종 결과에 input, id, output 모두 포함
+        hard_voting_result.append({
+            "id": sample_id,
+            "input": input_texts[sample_id],
+            "output": final_prediction
+        })
+
+    # 최종 결과를 json 파일로 저장
+    with open(f"./{result_path}/hard_voting_result.json", 'w', encoding='utf-8') as f:
+        for entry in hard_voting_result:
+            # 한 줄씩 JSON 객체로 저장하여 모델 출력 파일과 같은 형식으로 만듦
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    print("결과가 저장되었습니다")
+
+def kfold_do_train(config):
+    """kfold 학습"""
+    # seed값 고정
+    set_seed(config.seed)
+
+    # device 지정
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Current device is {device}.")
+
+    # 모델
+    model, tokenizer = load_model_and_tokenizer(config)
+    model.to(device)
+    
+    # KFold로 나눈 데이터셋
+    fold_datasets = kfold_datasets(config, tokenizer, k=config.K_Fold)
+
+    # Fold만큼 반복
+    for fold, (train_dataset, val_dataset) in enumerate(fold_datasets):
+        print(f"--------Training fold {fold + 1}--------")
+        
+        # 두 번째 학습 시작 시 model, tkenizer 재정의, 각 폴드별 학습을 분리하기 위함
+        if fold >= 1:
+            model, tokenizer = load_model_and_tokenizer(config)
+        
+        # Trainer 생성
+        trainer = make_trainer(config, model, tokenizer)
+        
+        # 학습
+        trainer.train_dataset = train_dataset # 학습 데이터 재정의
+        trainer.eval_dataset = val_dataset # 검증 데이터 재정의
+        trainer.train()
+        
+        # 저장
+        save_path = save_path = os.path.join("exp", config.run_name, config.save_dir, f"{fold+1}")
+        model.save_pretrained(save_path)
+        tokenizer.save_pretrained(save_path)
+        
+def kfold_inference(config):
+    """kfold 추론"""
+    result_path = os.path.join("exp", config.result_dir)
+    os.makedirs(result_path, exist_ok=True)
+    # seed값 고정
+    set_seed(config.seed)
+
+    # device 지정
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Current device is {device}.")
+    
+    # 각 1~K번 폴더에 있는 모델 추론
+    for fold in range(1,config.K_Fold+1):
+        model, tokenizer = KFold_load_model_and_tokenizer_for_inference(
+            config.save_dir, config.run_name, f"{fold}"
+        )
+        model.to(device)
+
+        if config.use_local_zip:
+            print("You're using Data from Local")
+            test_dataset = get_dataset(
+                config, tokenizer=tokenizer, type_="test", submission=False
+            )
+            submission_df = get_dataset(
+                config, tokenizer=tokenizer, type_="test", submission=True
+            )
+            test_loader = DataLoader(
+                dataset=test_dataset,
+                batch_size=32,
+                shuffle=False,
+            )
+        else:
+            print("You're using Data from Huggingface-hub")
+            test_dataset = get_dataset_hf(
+                config, tokenizer=tokenizer, type_="test", submission=False
+            )
+            submission_df = get_dataset_hf(
+                config, tokenizer=tokenizer, type_="test", submission=True
+            )
+            test_loader = DataLoader(
+                dataset=test_dataset, batch_size=32, shuffle=False, collate_fn=data_collator
+            )
+            
+        answer = []
+        print("Inference Start!")
+        for data in tqdm(test_loader):
+            input_ids = data["input_ids"].to(device)
+            token_type_ids = data["token_type_ids"].to(device)
+            attention_mask = data["attention_mask"].to(device)
+
+            outputs = model(
+                input_ids=input_ids,
+                token_type_ids=token_type_ids,
+                attention_mask=attention_mask,
+            )
+
+            if outputs.logits.shape[1] == 1:
+                predictions = np.where(outputs.logits.detach().cpu().numpy() > 0.5, 1, 0)
+            else:
+                predictions = np.argmax(outputs.logits.detach().cpu().numpy(), axis=1)
+
+            answer.append(predictions)
+
+        answer = np.concatenate(answer, axis=0)
+
+        submission_df["output"] = answer
+        result_path_fold = os.path.join("exp", config.result_dir, f"result_{fold}")
+        submission_df.to_json(
+            f"{result_path_fold}.json",
+            orient="records",
+            force_ascii=False,
+            lines=True,
+        )
+        
+    ensemble(result_path)

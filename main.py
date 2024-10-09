@@ -5,6 +5,10 @@ import os
 from huggingface_hub import login
 from dotenv import load_dotenv
 
+
+from model import do_train, kfold_do_train
+from utils import set_experiment_dir
+
 from model import do_train
 from utils import set_experiment_dir, is_bool, is_int, is_int_float
 
@@ -172,6 +176,18 @@ def get_config():
         choices=[0, 1],
         type=int,
     )
+    
+    parser.add_argument(
+        "--K_Fold",
+        type=int,
+        default=5,
+    )
+    
+    parser.add_argument(
+        "--K_Fold_Train",
+        type=bool,
+        default=False
+    )
 
     config = parser.parse_args()
 
@@ -195,5 +211,8 @@ if __name__ == "__main__":
     #     project=config.project_name,
     #     name=config.run_name,
     # )
-    do_train(config)
+    if config.K_Fold_Train:
+        kfold_do_train(config)
+    else:
+        do_train(config)
     # wandb.finish()
