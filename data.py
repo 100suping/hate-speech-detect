@@ -4,6 +4,8 @@ import pandas as pd
 from collections.abc import Mapping
 import numpy as np
 
+import random
+
 import torch
 from torch.utils.data import Dataset
 from torch import FloatTensor, LongTensor
@@ -32,9 +34,7 @@ def jsonl_to_pandas(data_dir, type_="train", submission=False) -> pd.DataFrame:
         type_ = "dev"
     data_path = glob.glob(f"{data_dir}/*{type_}.jsonl")
     if not data_path:
-        print(
-            "로컬에 데이터 파일이 존재하지 않습니다. 로컬의 zip 파일 압축해제를 시작합니다."
-        )
+        print("로컬에 데이터 파일이 존재하지 않습니다. 로컬의 zip 파일 압축해제를 시작합니다.")
         data_path = check_data_on_wd(data_dir, type_)
 
     temp_dicts = []
@@ -96,9 +96,19 @@ def get_dataset(config, tokenizer, type_="train", submission=False):
     if submission:
         return df
 
+    # random 데이터 증강
+    # random_data_deletion 함수 내 기본값을 False로 두어서 True일 때만 사용하게 합니다.
+    def random_data_deletion(df, use_random_deletion=False, p=0.2):
+        if use_random_deletion:
+            [
+                " ".join(word for word in df.split() if random.uniform(0, 1) > p)
+                for df in df
+            ]
+            return df
+
     # raw data -> tokenized data
     tokenized_data = tokenizer(
-        df.input.to_list(),
+        random_data_deletion(df, use_random_deletion=False).input.to_list(),
         max_length=config.max_len,
         padding=True,
         truncation=True,
@@ -236,31 +246,34 @@ def data_collator(examples):
         "token_type_ids": token_type_ids,
     }
 
+
 # K개의 Fold로 데이터셋을 나누는 함수
 def kfold_datasets(config, tokenizer, k=5, submission=False):
-    
+
     # config의 test_run 값에 따라서 데이터를 얼마나 불러올지 결정
     if config.test_run:
         flag = 500
     else:
         flag = None
-    
+
     # 전체 데이터를 불러오기 type: pandas DataFrame
     train_df = jsonl_to_pandas("./NIKL_AU_2023_COMPETITION_v1.0", type_="train")[:flag]
     valid_df = jsonl_to_pandas("./NIKL_AU_2023_COMPETITION_v1.0", type_="valid")[:flag]
-    
+
     # train.csv와 dev.csv 파일 병합 (열 이름이 일치하는지 확인)
     combined_df = pd.concat([train_df, valid_df], ignore_index=True)
-    
+
     # KFold 객체 생성 (n_split는 Fold 개수)
     skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=42)
     fold_datasets = []
 
     # 각 폴드별로 데이터셋을 나눔
-    for train_index, val_index in skf.split(combined_df, combined_df['output']): # 'output' 을 고려하여 나눔
+    for train_index, val_index in skf.split(
+        combined_df, combined_df["output"]
+    ):  # 'output' 을 고려하여 나눔
         train_df = combined_df.iloc[train_index]
         val_df = combined_df.iloc[val_index]
-        
+
         # 훈련 데이터를 토크나이저로 전처리
         train_tokenized = tokenizer(
             train_df.input.to_list(),
@@ -270,7 +283,7 @@ def kfold_datasets(config, tokenizer, k=5, submission=False):
             add_special_tokens=True,
             return_tensors="pt",
         )
-        
+
         # 검증 데이터를 토크나이저로 전처리
         val_tokenized = tokenizer(
             val_df.input.to_list(),
@@ -280,20 +293,28 @@ def kfold_datasets(config, tokenizer, k=5, submission=False):
             add_special_tokens=True,
             return_tensors="pt",
         )
-        
+
         # train 및 valid 데이터만 label이 존재
         if config.num_labels == 1:
-            train_tokenized["label"] = FloatTensor(train_df["output"].to_numpy()).reshape(-1, 1)
-            val_tokenized["label"] = FloatTensor(val_df["output"].to_numpy()).reshape(-1, 1)
+            train_tokenized["label"] = FloatTensor(
+                train_df["output"].to_numpy()
+            ).reshape(-1, 1)
+            val_tokenized["label"] = FloatTensor(val_df["output"].to_numpy()).reshape(
+                -1, 1
+            )
         else:
-            train_tokenized["label"] = LongTensor(train_df["output"].to_numpy()).reshape(-1, 1)
-            val_tokenized["label"] = LongTensor(val_df["output"].to_numpy()).reshape(-1, 1)
-        
+            train_tokenized["label"] = LongTensor(
+                train_df["output"].to_numpy()
+            ).reshape(-1, 1)
+            val_tokenized["label"] = LongTensor(val_df["output"].to_numpy()).reshape(
+                -1, 1
+            )
+
         # pd.DataFrame -> pytorch Dataset
         train_dataset = Dataset_v1(train_tokenized, train=True)
         val_dataset = Dataset_v1(val_tokenized, train=True)
-        
+
         # 각 폴드별로 train_dataset, val_dataset 저장
         fold_datasets.append((train_dataset, val_dataset))
-    
+
     return fold_datasets

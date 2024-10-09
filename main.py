@@ -17,21 +17,12 @@ def get_config():
     """argparse를 이용해 사용자에게 하이퍼 파라미터를 입력 받는 함수입니다."""
 
     # parser 생성
-    parser = argparse.ArgumentParser(
-        prog="Get Hyperparameters",
-    )
+    parser = argparse.ArgumentParser(prog="Get Hyperparameters")
+
+    parser.add_argument("--project-name", default="hate-speech", type=str)
 
     parser.add_argument(
-        "--project-name",
-        default="hate-speech",
-        type=str,
-    )
-
-    parser.add_argument(
-        "--run-name",
-        default="test",
-        type=str,
-        help="wandb에서 쓰일 run_name",
+        "--run-name", default="test", type=str, help="wandb에서 쓰일 run_name"
     )
 
     parser.add_argument(
@@ -41,12 +32,7 @@ def get_config():
         help="wandb에서 업데이트 될 step 기준 비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
-    parser.add_argument(
-        "--use-local-zip",
-        default=1,
-        choices=[0, 1],
-        type=int,
-    )
+    parser.add_argument("--use-local-zip", default=1, choices=[0, 1], type=int)
 
     parser.add_argument(
         "--dataset-dir",
@@ -98,20 +84,11 @@ def get_config():
         help="로컬에 로깅을 진행 할 시, exp/--run-name 아래에 로깅이 저장될 디렉터리",
     )
 
-    parser.add_argument(
-        "--num-labels",
-        default=1,
-        choices=[1, 2],
-        type=int,
-    )
+    parser.add_argument("--num-labels", default=1, choices=[1, 2], type=int)
 
     parser.add_argument("--epochs", default=10, type=int)
 
-    parser.add_argument(
-        "--batch-size",
-        default=32,
-        type=int,
-    )
+    parser.add_argument("--batch-size", default=32, type=int)
 
     parser.add_argument(
         "--max-len",
@@ -127,17 +104,9 @@ def get_config():
         help="비활성화를 위해서는 .sh에서 none을 기입하거나 제거하면 됩니다.",
     )
 
-    parser.add_argument(
-        "--lr",
-        default=5e-5,
-        type=float,
-    )
+    parser.add_argument("--lr", default=5e-5, type=float)
 
-    parser.add_argument(
-        "--weight-decay",
-        default=0.01,
-        type=float,
-    )
+    parser.add_argument("--weight-decay", default=0.01, type=float)
 
     parser.add_argument(
         "--fp16",
@@ -164,30 +133,13 @@ def get_config():
 
     parser.add_argument("--threshold", default=0.0, type=float)
 
-    parser.add_argument(
-        "--seed",
-        default=42,
-        type=int,
-    )
+    parser.add_argument("--seed", default=42, type=int)
 
-    parser.add_argument(
-        "--test-run",
-        default=0,
-        choices=[0, 1],
-        type=int,
-    )
-    
-    parser.add_argument(
-        "--K_Fold",
-        type=int,
-        default=5,
-    )
-    
-    parser.add_argument(
-        "--K_Fold_Train",
-        type=bool,
-        default=False
-    )
+    parser.add_argument("--test-run", default=0, choices=[0, 1], type=int)
+
+    parser.add_argument("--K_Fold", type=int, default=5)
+
+    parser.add_argument("--K_Fold_Train", type=bool, default=False)
 
     config = parser.parse_args()
 
@@ -195,7 +147,7 @@ def get_config():
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_dotenv(os.getenv)
 
     config = get_config()
     run_path = os.path.join("exp", config.run_name)
@@ -205,7 +157,7 @@ if __name__ == "__main__":
         config.run_name, config.save_dir, config.ckpt_dir, config.logging_dir
     )
     # huggingface hub, wandb 로그인
-    login()
+    login(os.getenv())
     # wandb.login()
     # wandb.init(
     #     project=config.project_name,
