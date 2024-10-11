@@ -77,13 +77,13 @@ def get_config():
     )
     
     parser.add_argument(
-        "--K_Fold",
+        "--K-Fold",
         type=int,
         default=5,
     )
     
     parser.add_argument(
-        "--K_Fold_Inference",
+        "--K-Fold-Inference",
         type=bool,
         default=False
     )
